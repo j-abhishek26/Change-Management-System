@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Engineering Change Impact Report — {{ change_id }}</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: #0a0b10; color: #e0e2ea;
+            line-height: 1.6; padding: 32px;
+        }
+
+        .report {
+            max-width: 1020px; margin: 0 auto;
+            background: #12141c;
+            border: 1px solid #1e2130;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        /* ─── Report Header ─── */
+        .report-header {
+            background: linear-gradient(135deg, #1a1e2e 0%, #0d1020 100%);
+            padding: 36px 44px 28px;
+            border-bottom: 2px solid #252840;
+        }
+        .header-top {
+            display: flex; align-items: flex-start; justify-content: space-between;
+        }
+        .header-left h1 {
+            font-size: 24px; font-weight: 800;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            margin-bottom: 4px;
+        }
+        .header-left .subtitle {
+            font-size: 13px; color: #6b7089;
+        }
+        .header-badges { display: flex; gap: 8px; align-items: center; }
+
+        .report-meta {
+            display: grid; grid-template-columns: repeat(4, 1fr);
+            gap: 12px; margin-top: 20px;
+        }
+        .meta-item {
+            padding: 14px 16px; background: rgba(30,33,48,0.6);
+            border-radius: 10px; border: 1px solid #252840;
+        }
+        .meta-label { font-size: 10px; color: #6b7089; text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; }
+        .meta-value { font-size: 14px; font-weight: 600; margin-top: 4px; }
+
+        /* ─── Section ─── */
+        .section {
+            padding: 28px 44px;
+            border-bottom: 1px solid #1e2130;
+        }
+        .section:last-child { border-bottom: none; }
+        .section-title {
+            display: flex; align-items: center; gap: 10px;
+            font-size: 15px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.5px;
+            margin-bottom: 18px; color: #c0c4d8;
+        }
+        .section-desc {
+            font-size: 13px; color: #8b8fa3; margin: -10px 0 18px 38px;
+            line-height: 1.5;
+        }
+        .section-icon {
+            width: 28px; height: 28px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; flex-shrink: 0;
+        }
+        .section-icon.blue { background: rgba(59,130,246,0.15); }
+        .section-icon.green { background: rgba(34,197,94,0.15); }
+        .section-icon.red { background: rgba(239,68,68,0.15); }
+        .section-icon.orange { background: rgba(245,158,11,0.15); }
+        .section-icon.purple { background: rgba(168,85,247,0.15); }
+        .section-icon.cyan { background: rgba(34,211,238,0.15); }
+
+        /* ─── Executive Summary Banner ─── */
+        .exec-summary {
+            background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(139,92,246,0.08));
+            border: 1px solid rgba(59,130,246,0.2);
+            border-radius: 12px; padding: 24px;
+            margin-bottom: 0;
+        }
+        .exec-summary h3 { font-size: 16px; font-weight: 700; color: #e0e2ea; margin-bottom: 12px; }
+        .exec-summary p { font-size: 14px; color: #a0a4b8; line-height: 1.7; }
+        .exec-summary .highlight { color: #60a5fa; font-weight: 600; }
+
+        /* ─── NLP Box ─── */
+        .nlp-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px;
+        }
+        .nlp-item {
+            padding: 14px 16px; background: #0d0f16;
+            border-radius: 10px; border-left: 3px solid #3b82f6;
+        }
+        .nlp-label { font-size: 10px; color: #6b7089; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px; }
+        .nlp-value { font-size: 15px; font-weight: 600; font-family: 'JetBrains Mono', monospace; }
+
+        /* ─── Parameter Change Visual ─── */
+        .param-change-visual {
+            display: flex; align-items: center; gap: 20px;
+            padding: 24px; background: #0d0f16; border-radius: 12px;
+        }
+        .param-box {
+            flex: 1; text-align: center; padding: 20px;
+            background: #12141c; border-radius: 10px;
+        }
+        .param-box.before { border: 1px solid rgba(59,130,246,0.3); }
+        .param-box.after { border: 1px solid rgba(34,197,94,0.3); }
+        .param-box-tag {
+            font-size: 10px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 1px; margin-bottom: 8px;
+        }
+        .param-box.before .param-box-tag { color: #3b82f6; }
+        .param-box.after .param-box-tag { color: #22c55e; }
+        .param-box-value {
+            font-size: 32px; font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .param-box-name {
+            font-size: 12px; color: #22d3ee; margin-top: 8px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .arrow-sep { font-size: 32px; color: #3b82f6; flex-shrink: 0; }
+
+        /* ─── Stats Grid ─── */
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+        }
+        .stat-box {
+            text-align: center; padding: 20px 12px;
+            background: #0d0f16; border-radius: 12px;
+            border: 1px solid #1e2130;
+        }
+        .stat-num {
+            font-size: 36px; font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .stat-name { font-size: 11px; color: #6b7089; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* ─── Badges ─── */
+        .badge {
+            display: inline-block; padding: 3px 12px; border-radius: 20px;
+            font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;
+        }
+        .badge-major { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+        .badge-minor { background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
+        .badge-high { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+        .badge-medium { background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
+        .badge-low { background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
+
+        .fusion-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 5px 14px; border-radius: 20px;
+            font-size: 11px; font-weight: 700;
+        }
+        .fusion-badge.connected {
+            background: rgba(34,197,94,0.15); color: #4ade80;
+            border: 1px solid rgba(34,197,94,0.3);
+        }
+        .fusion-badge.simulated {
+            background: rgba(245,158,11,0.15); color: #fbbf24;
+            border: 1px solid rgba(245,158,11,0.3);
+        }
+
+        /* ─── Tables ─── */
+        table {
+            width: 100%; border-collapse: collapse;
+            background: #0d0f16; border-radius: 12px;
+            overflow: hidden; font-size: 13px;
+        }
+        th {
+            text-align: left; padding: 12px 16px;
+            font-size: 11px; color: #6b7089;
+            text-transform: uppercase; letter-spacing: 0.5px;
+            background: #0a0c12; border-bottom: 1px solid #1e2130;
+            font-weight: 600;
+        }
+        td {
+            padding: 12px 16px; font-size: 13px;
+            border-bottom: 1px solid rgba(30,33,48,0.5);
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: rgba(59,130,246,0.03); }
+
+        /* ─── Severity Bar ─── */
+        .severity-bar {
+            width: 60px; height: 6px; background: #1e2130; border-radius: 3px;
+            overflow: hidden; display: inline-block; vertical-align: middle; margin-left: 8px;
+        }
+        .severity-fill { height: 100%; border-radius: 3px; }
+        .severity-fill.high { background: #f87171; }
+        .severity-fill.medium { background: #fbbf24; }
+        .severity-fill.low { background: #4ade80; }
+
+        /* ─── Geometry Comparison ─── */
+        .geometry-table { margin-top: 8px; }
+        .geometry-table th { font-size: 10px; }
+        .geometry-table td { text-align: center; }
+        .geometry-table td:first-child { text-align: left; }
+        .change-positive { color: #4ade80; font-weight: 600; }
+        .change-negative { color: #f87171; font-weight: 600; }
+        .change-neutral { color: #6b7089; }
+
+        /* ─── Effort Breakdown ─── */
+        .effort-bar-container {
+            display: flex; align-items: center; gap: 12px;
+            margin-bottom: 8px;
+        }
+        .effort-bar-label { width: 140px; font-size: 12px; color: #8b8fa3; }
+        .effort-bar {
+            flex: 1; height: 8px; background: #1e2130; border-radius: 4px; overflow: hidden;
+        }
+        .effort-bar-fill {
+            height: 100%; border-radius: 4px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+        }
+        .effort-bar-value { font-size: 12px; color: #c0c4d8; width: 40px; text-align: right; font-family: 'JetBrains Mono', monospace; }
+
+        /* ─── Dependency Graph ─── */
+        .dep-flow {
+            display: flex; align-items: center; justify-content: center;
+            gap: 0; padding: 20px; background: #0d0f16; border-radius: 12px;
+            margin-bottom: 16px; flex-wrap: wrap;
+        }
+        .dep-node {
+            padding: 10px 16px; border-radius: 8px;
+            font-size: 12px; font-weight: 600; text-align: center;
+            min-width: 80px;
+        }
+        .dep-node.primary { background: rgba(59,130,246,0.2); border: 1px solid rgba(59,130,246,0.4); color: #60a5fa; }
+        .dep-node.affected { background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); color: #fbbf24; }
+        .dep-arrow { font-size: 18px; color: #3b82f6; padding: 0 6px; }
+
+        /* ─── Recommendation Cards ─── */
+        .rec-item {
+            padding: 14px 18px; margin-bottom: 8px;
+            background: #0d0f16; border-radius: 10px;
+            border-left: 3px solid #3b82f6;
+            font-size: 13px; line-height: 1.5;
+        }
+        .rec-item.warning { border-left-color: #f59e0b; }
+        .rec-item.critical { border-left-color: #ef4444; }
+        .rec-item .rec-number {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 20px; height: 20px; border-radius: 50%;
+            background: rgba(59,130,246,0.2); color: #60a5fa;
+            font-size: 10px; font-weight: 700; margin-right: 8px;
+        }
+
+        /* ─── Checklist ─── */
+        .checklist-item {
+            display: flex; align-items: flex-start; gap: 10px;
+            padding: 10px 0; font-size: 13px;
+            border-bottom: 1px solid rgba(30,33,48,0.3);
+        }
+        .checklist-item:last-child { border-bottom: none; }
+        .checklist-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+
+        /* ─── Footer ─── */
+        .report-footer {
+            padding: 24px 44px; text-align: center;
+            font-size: 11px; color: #4a4e62;
+            border-top: 2px solid #1e2130;
+            background: rgba(10,11,16,0.5);
+        }
+
+        /* ─── PDF Download Button ─── */
+        .download-bar {
+            display: flex; justify-content: flex-end; gap: 10px;
+            padding: 16px 44px; background: rgba(10,11,16,0.5);
+            border-bottom: 1px solid #1e2130;
+        }
+        .btn-download {
+            padding: 8px 20px; border-radius: 8px; border: none;
+            font-size: 12px; font-weight: 600; cursor: pointer;
+            display: inline-flex; align-items: center; gap: 6px;
+            text-decoration: none;
+        }
+        .btn-pdf { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+        .btn-pdf:hover { background: rgba(239,68,68,0.25); }
+        .btn-print { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
+        .btn-print:hover { background: rgba(59,130,246,0.25); }
+
+        /* ─── Print/PDF Styles ─── */
+        @media print {
+            body { background: #fff !important; color: #111 !important; padding: 10px !important; }
+            .report { border: 1px solid #ddd !important; box-shadow: none !important; background: #fff !important; }
+            .report-header { background: #f0f2f5 !important; }
+            .report-header h1 { -webkit-text-fill-color: #1a1a2e !important; background: none !important; color: #1a1a2e !important; }
+            .section { border-bottom: 1px solid #ddd !important; }
+            .meta-item, .nlp-item, .stat-box, .param-box, .rec-item, .dep-node { background: #f8f9fa !important; border-color: #ddd !important; }
+            .param-change-visual, .dep-flow, .exec-summary { background: #f0f2f5 !important;  }
+            table { background: #f8f9fa !important; }
+            th { background: #eef0f3 !important; color: #333 !important; }
+            td { color: #333 !important; border-color: #ddd !important; }
+            .stat-num { -webkit-text-fill-color: #1a1a2e !important; background: none !important; }
+            .badge { border-width: 1px !important; }
+            .download-bar { display: none !important; }
+            .meta-label, .nlp-label, .stat-name, .section-desc { color: #666 !important; }
+            .geometry-label, .effort-bar-label { color: #555 !important; }
+            .nlp-value, .param-box-value, .meta-value { color: #111 !important; }
+            .section-title { color: #222 !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="report">
+
+        <!-- ═══ DOWNLOAD BAR ═══ -->
+        <div class="download-bar">
+            {% if pdf_url %}
+            <a href="{{ pdf_url }}" class="btn-download btn-pdf" download>📥 Download PDF</a>
+            {% endif %}
+            <button class="btn-download btn-print" onclick="window.print()">🖨️ Print Report</button>
+        </div>
+
+        <!-- ═══ HEADER ═══ -->
+        <div class="report-header">
+            <div class="header-top">
+                <div class="header-left">
+                    <h1>Engineering Change Impact Report</h1>
+                    <div class="subtitle">
+                        Change ID: <strong>{{ change_id }}</strong> &nbsp;|&nbsp; {{ timestamp }}
+                    </div>
+                </div>
+                <div class="header-badges">
+                    {% if fusion_connected %}
+                    <span class="fusion-badge connected">● Fusion 360 Live</span>
+                    {% else %}
+                    <span class="fusion-badge simulated">● Simulation Mode</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="report-meta">
+                <div class="meta-item">
+                    <div class="meta-label">Change Request</div>
+                    <div class="meta-value">"{{ original_text }}"</div>
+                </div>
+                <div class="meta-item">
+                    <div class="meta-label">Target Component</div>
+                    <div class="meta-value">{{ target_part }}</div>
+                </div>
+                <div class="meta-item">
+                    <div class="meta-label">Revision Type</div>
+                    <div class="meta-value"><span class="badge badge-{{ classification | lower }}">{{ classification }}</span></div>
+                </div>
+                <div class="meta-item">
+                    <div class="meta-label">Risk Assessment</div>
+                    <div class="meta-value"><span class="badge badge-{{ risk_level | lower }}">{{ risk_level }}</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ EXECUTIVE SUMMARY ═══ -->
+        <div class="section">
+            <div class="section-title"><div class="section-icon purple">📋</div> Executive Summary</div>
+            <div class="exec-summary">
+                <p>
+                    This report analyzes the engineering change request: <span class="highlight">"{{ original_text }}"</span>.
+                    The system parsed the natural-language instruction with <span class="highlight">{{ (confidence * 100) | round(0) }}% confidence</span>,
+                    identifying a <span class="highlight">{{ action }}</span> action on the <span class="highlight">{{ target_part }}</span> component
+                    {% if parameter %}targeting the <span class="highlight">{{ parameter | replace('_', ' ') }}</span> parameter{% endif %}.
+                    {% if param_changed %}
+                    The Fusion 360 CAD parameter <span class="highlight">{{ param_changed }}</span> was modified from
+                    <span class="highlight">{{ old_expression }}</span> to <span class="highlight">{{ new_expression }}</span>.
+                    {% endif %}
+                    The change is classified as <span class="highlight">{{ classification }}</span> revision with
+                    <span class="highlight">{{ risk_level }}</span> risk, affecting
+                    <span class="highlight">{{ total_affected_count }}</span> dependent component(s) and requiring an estimated
+                    <span class="highlight">{{ effort_hours }} hours</span> of engineering effort.
+                </p>
+            </div>
+        </div>
+
+        <!-- ═══ 1. NLP INTERPRETATION ═══ -->
+        <div class="section">
+            <div class="section-title"><div class="section-icon purple">🧠</div> 1. Natural Language Interpretation</div>
+            <div class="section-desc">The AI-powered NLP engine parsed the free-text change request into structured, actionable parameters.</div>
+            <div class="nlp-grid">
+                <div class="nlp-item">
+                    <div class="nlp-label">Detected Action</div>
+                    <div class="nlp-value" style="color:#3b82f6;">{{ action or '—' }}</div>
+                </div>
+                <div class="nlp-item">
+                    <div class="nlp-label">Target Component</div>
+                    <div class="nlp-value" style="color:#22c55e;">{{ target_part or '—' }}</div>
+                </div>
+                <div class="nlp-item">
+                    <div class="nlp-label">Parameter</div>
+                    <div class="nlp-value" style="color:#f59e0b;">{{ parameter | replace('_', ' ') if parameter else '—' }}</div>
+                </div>
+                <div class="nlp-item">
+                    <div class="nlp-label">Modification Value</div>
+                    <div class="nlp-value" style="color:#a855f7;">{{ value }}{{ ' ' + unit if unit else '' }}</div>
+                </div>
+                <div class="nlp-item">
+                    <div class="nlp-label">Parse Confidence</div>
+                    <div class="nlp-value" style="color:#22d3ee;">{{ (confidence * 100) | round(0) }}%</div>
+                </div>
+                {% if fusion_parameter %}
+                <div class="nlp-item" style="border-left-color:#22d3ee;">
+                    <div class="nlp-label">Mapped CAD Parameter</div>
+                    <div class="nlp-value" style="color:#22d3ee;">{{ fusion_parameter }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- ═══ 2. CAD PARAMETER MODIFICATION ═══ -->
+        {% if param_changed %}
+        <div class="section">
+            <div class="section-title"><div class="section-icon blue">⚙️</div> 2. CAD Parameter Modification (Fusion 360)</div>
+            <div class="section-desc">The identified parameter was automatically modified in the live Fusion 360 model via the API bridge. The design was regenerated and validated.</div>
+            <div class="param-change-visual">
+                <div class="param-box before">
+                    <div class="param-box-tag">Before</div>
+                    <div class="param-box-value">{{ old_expression or '—' }}</div>
+                    <div class="param-box-name">{{ param_changed }}</div>
+                </div>
+                <div class="arrow-sep">→</div>
+                <div class="param-box after">
+                    <div class="param-box-tag">After</div>
+                    <div class="param-box-value">{{ new_expression or '—' }}</div>
+                    <div class="param-box-name">{{ param_changed }}</div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- ═══ 3. GEOMETRY COMPARISON ═══ -->
+        {% if before_metrics and after_metrics %}
+        <div class="section">
+            <div class="section-title"><div class="section-icon green">📏</div> 3. Geometry Change Analysis</div>
+            <div class="section-desc">Bounding box, volume, and surface area were measured from Fusion 360 before and after modification.</div>
+            <table class="geometry-table">
+                <thead>
+                    <tr><th style="width:200px;">Metric</th><th>Before</th><th>After</th><th>Change</th></tr>
+                </thead>
+                <tbody>
+                    {% if before_metrics.get('bounding_box') and after_metrics.get('bounding_box') %}
+                    {% set bb = before_metrics['bounding_box'] %}
+                    {% set ab = after_metrics['bounding_box'] %}
+                    {% for dim, label in [('length', 'Width (X)'), ('width', 'Height (Y)'), ('height', 'Depth (Z)')] %}
+                    {% set bv = bb.get(dim, 0) %}
+                    {% set av = ab.get(dim, 0) %}
+                    {% set pct = ((av - bv) / bv * 100) if bv > 0 else 0 %}
+                    <tr>
+                        <td style="font-weight:600;">{{ label }}</td>
+                        <td style="text-align:center; font-family:'JetBrains Mono',monospace;">{{ "%.2f" | format(bv) }} mm</td>
+                        <td style="text-align:center; font-family:'JetBrains Mono',monospace;">{{ "%.2f" | format(av) }} mm</td>
+                        <td style="text-align:center;" class="{{ 'change-positive' if pct > 0 else ('change-negative' if pct < 0 else 'change-neutral') }}">
+                            {{ "%+.1f" | format(pct) }}%
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% endif %}
+                    {% if before_metrics.get('total_volume') and after_metrics.get('total_volume') %}
+                    {% set vpct = ((after_metrics['total_volume'] - before_metrics['total_volume']) / before_metrics['total_volume'] * 100) if before_metrics['total_volume'] > 0 else 0 %}
+                    <tr>
+                        <td style="font-weight:600;">Volume</td>
+                        <td style="text-align:center; font-family:'JetBrains Mono',monospace;">{{ "%.4f" | format(before_metrics['total_volume']) }} cm³</td>
+                        <td style="text-align:center; font-family:'JetBrains Mono',monospace;">{{ "%.4f" | format(after_metrics['total_volume']) }} cm³</td>
+                        <td style="text-align:center;" class="{{ 'change-positive' if vpct > 0 else ('change-negative' if vpct < 0 else 'change-neutral') }}">
+                            {{ "%+.1f" | format(vpct) }}%
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% if before_metrics.get('total_area') and after_metrics.get('total_area') %}
+                    {% set apct = ((after_metrics['total_area'] - before_metrics['total_area']) / before_metrics['total_area'] * 100) if before_metrics['total_area'] > 0 else 0 %}
+                    <tr>
+                        <td style="font-weight:600;">Surface Area</td>
+                        <td style="text-align:center; font-family:'JetBrains Mono',monospace;">{{ "%.2f" | format(before_metrics['total_area']) }} cm²</td>
+                        <td style="text-align:center; font-family:'JetBrains Mono',monospace;">{{ "%.2f" | format(after_metrics['total_area']) }} cm²</td>
+                        <td style="text-align:center;" class="{{ 'change-positive' if apct > 0 else ('change-negative' if apct < 0 else 'change-neutral') }}">
+                            {{ "%+.1f" | format(apct) }}%
+                        </td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        <!-- ═══ 4. IMPACT DASHBOARD ═══ -->
+        <div class="section">
+            <div class="section-title"><div class="section-icon red">📊</div> 4. Impact Analysis Dashboard</div>
+            <div class="section-desc">Quantified impact assessment based on dependency analysis, parameter criticality, and coupling factors.</div>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-num">{{ total_affected_count }}</div>
+                    <div class="stat-name">Affected Parts</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-num" style="-webkit-text-fill-color: unset; background: none;"><span class="badge badge-{{ classification | lower }}" style="font-size:14px;">{{ classification }}</span></div>
+                    <div class="stat-name">Revision Type</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-num" style="-webkit-text-fill-color: unset; background: none;"><span class="badge badge-{{ risk_level | lower }}" style="font-size:14px;">{{ risk_level }}</span></div>
+                    <div class="stat-name">Risk Level</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-num">{{ effort_hours }}h</div>
+                    <div class="stat-name">Est. Effort</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ 5. DEPENDENCY CASCADE ═══ -->
+        {% if affected_parts %}
+        <div class="section">
+            <div class="section-title"><div class="section-icon orange">🔗</div> 5. Dependency Impact Cascade</div>
+            <div class="section-desc">Components downstream of the modified part that require review or update due to mechanical coupling.</div>
+
+            <!-- Visual dependency flow -->
+            <div class="dep-flow">
+                <div class="dep-node primary">{{ target_part }}</div>
+                {% for part in affected_parts %}
+                <div class="dep-arrow">→</div>
+                <div class="dep-node affected">{{ part.part_name | replace('_', ' ') }}</div>
+                {% endfor %}
+            </div>
+
+            <table>
+                <thead>
+                    <tr><th>Component</th><th>Relationship</th><th>Impact Description</th><th>Severity</th></tr>
+                </thead>
+                <tbody>
+                    {% for part in affected_parts %}
+                    <tr>
+                        <td style="font-weight:600;">{{ part.part_name | replace('_', ' ') }}</td>
+                        <td><span class="badge badge-medium" style="font-size:10px;">{{ part.relationship | replace('_', ' ') }}</span></td>
+                        <td style="color:#a0a4b8; line-height:1.4;">{{ part.impact_description }}</td>
+                        <td>
+                            <span class="badge badge-{{ part.severity | lower }}">{{ part.severity }}</span>
+                            <div class="severity-bar"><div class="severity-fill {{ part.severity | lower }}" style="width:{{ '90%' if part.severity == 'HIGH' else ('60%' if part.severity == 'MEDIUM' else '30%') }};"></div></div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        <!-- ═══ 6. BOM IMPACT ═══ -->
+        {% if bom_impacts %}
+        <div class="section">
+            <div class="section-title"><div class="section-icon blue">📦</div> 6. Bill of Materials (BOM) Impact</div>
+            <div class="section-desc">Changes to cost, weight, material, and manufacturing processes triggered by this modification.</div>
+            <table>
+                <thead><tr><th>Impact Type</th><th>Description</th><th>Estimated Change</th></tr></thead>
+                <tbody>
+                    {% for bom in bom_impacts %}
+                    <tr>
+                        <td style="font-weight:600;">{{ bom.impact_type | replace('_', ' ') | title }}</td>
+                        <td style="color:#a0a4b8;">{{ bom.description }}</td>
+                        <td style="color:#a855f7; font-family:'JetBrains Mono',monospace;">{{ bom.estimated_change or '—' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        <!-- ═══ 7. DOCUMENT IMPACTS ═══ -->
+        {% if document_impacts %}
+        <div class="section">
+            <div class="section-title"><div class="section-icon purple">📄</div> 7. Document & Inspection Plan Impacts</div>
+            <div class="section-desc">Engineering documents, drawings, inspection procedures, and test plans that must be updated.</div>
+            <table>
+                <thead><tr><th>Document Title</th><th>Document Type</th><th>Action Required</th></tr></thead>
+                <tbody>
+                    {% for doc in document_impacts %}
+                    <tr>
+                        <td style="font-weight:600;">{{ doc.doc_title or doc.doc_type | title }}</td>
+                        <td>{{ doc.doc_type | replace('_', ' ') | title }}</td>
+                        <td><span class="badge badge-{{ 'high' if 'Update' in doc.action_required else 'medium' }}">{{ doc.action_required }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        <!-- ═══ 8. EFFORT ESTIMATION ═══ -->
+        <div class="section">
+            <div class="section-title"><div class="section-icon cyan">⏱️</div> 8. Engineering Effort Estimation</div>
+            <div class="section-desc">Estimated hours breakdown based on change complexity, affected parts count, and revision type.</div>
+            {% set cad_effort = (effort_hours * 0.3) | round(1) %}
+            {% set review_effort = (effort_hours * 0.25) | round(1) %}
+            {% set doc_effort = (effort_hours * 0.2) | round(1) %}
+            {% set test_effort = (effort_hours * 0.15) | round(1) %}
+            {% set admin_effort = (effort_hours * 0.1) | round(1) %}
+            <div style="padding: 20px; background: #0d0f16; border-radius: 12px;">
+                <div class="effort-bar-container">
+                    <div class="effort-bar-label">CAD Modification</div>
+                    <div class="effort-bar"><div class="effort-bar-fill" style="width:{{ (cad_effort/effort_hours*100) if effort_hours > 0 else 0 }}%;"></div></div>
+                    <div class="effort-bar-value">{{ cad_effort }}h</div>
+                </div>
+                <div class="effort-bar-container">
+                    <div class="effort-bar-label">Design Review</div>
+                    <div class="effort-bar"><div class="effort-bar-fill" style="width:{{ (review_effort/effort_hours*100) if effort_hours > 0 else 0 }}%;"></div></div>
+                    <div class="effort-bar-value">{{ review_effort }}h</div>
+                </div>
+                <div class="effort-bar-container">
+                    <div class="effort-bar-label">Documentation</div>
+                    <div class="effort-bar"><div class="effort-bar-fill" style="width:{{ (doc_effort/effort_hours*100) if effort_hours > 0 else 0 }}%;"></div></div>
+                    <div class="effort-bar-value">{{ doc_effort }}h</div>
+                </div>
+                <div class="effort-bar-container">
+                    <div class="effort-bar-label">Testing & QA</div>
+                    <div class="effort-bar"><div class="effort-bar-fill" style="width:{{ (test_effort/effort_hours*100) if effort_hours > 0 else 0 }}%;"></div></div>
+                    <div class="effort-bar-value">{{ test_effort }}h</div>
+                </div>
+                <div class="effort-bar-container">
+                    <div class="effort-bar-label">Admin & ECN</div>
+                    <div class="effort-bar"><div class="effort-bar-fill" style="width:{{ (admin_effort/effort_hours*100) if effort_hours > 0 else 0 }}%;"></div></div>
+                    <div class="effort-bar-value">{{ admin_effort }}h</div>
+                </div>
+                <div style="text-align:right; margin-top:12px; font-size:14px; font-weight:700; color:#c0c4d8;">
+                    Total: <span style="color:#60a5fa; font-family:'JetBrains Mono',monospace;">{{ effort_hours }} hours</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ 9. PDM / REVISION INFO ═══ -->
+        {% if pdm_revision %}
+        <div class="section">
+            <div class="section-title"><div class="section-icon blue">🗄️</div> 9. PDM — Revision Control</div>
+            <div class="section-desc">Product Data Management system revision record for traceability.</div>
+            <div class="nlp-grid">
+                <div class="nlp-item" style="border-left-color:#22c55e;">
+                    <div class="nlp-label">Previous Rev</div>
+                    <div class="nlp-value" style="color:#8b8fa3;">{{ pdm_revision.get('previous_revision', 'A') }}</div>
+                </div>
+                <div class="nlp-item" style="border-left-color:#22c55e;">
+                    <div class="nlp-label">New Rev</div>
+                    <div class="nlp-value" style="color:#22c55e;">{{ pdm_revision.get('new_revision', 'B') }}</div>
+                </div>
+                <div class="nlp-item" style="border-left-color:#22c55e;">
+                    <div class="nlp-label">Status</div>
+                    <div class="nlp-value" style="color:#fbbf24;">{{ pdm_revision.get('status', 'pending_review') | replace('_', ' ') | title }}</div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- ═══ 10. ERP / CHANGE ORDER ═══ -->
+        {% if erp_change_order %}
+        <div class="section">
+            <div class="section-title"><div class="section-icon green">🏭</div> 10. ERP — Change Order & Manufacturing</div>
+            <div class="section-desc">Enterprise Resource Planning change order created for manufacturing workflow integration.</div>
+            <div class="nlp-grid">
+                <div class="nlp-item" style="border-left-color:#4ade80;">
+                    <div class="nlp-label">Order ID</div>
+                    <div class="nlp-value" style="color:#22c55e; font-size:12px;">{{ erp_change_order.get('order_id', '—') }}</div>
+                </div>
+                <div class="nlp-item" style="border-left-color:#4ade80;">
+                    <div class="nlp-label">Status</div>
+                    <div class="nlp-value" style="color:#fbbf24;">{{ erp_change_order.get('status', 'created') | replace('_', ' ') | title }}</div>
+                </div>
+                <div class="nlp-item" style="border-left-color:#4ade80;">
+                    <div class="nlp-label">Priority</div>
+                    <div class="nlp-value" style="color:#f59e0b;">{{ erp_change_order.get('priority', 'NORMAL') }}</div>
+                </div>
+                {% if erp_change_order.get('estimated_cost') %}
+                <div class="nlp-item" style="border-left-color:#4ade80;">
+                    <div class="nlp-label">Est. Cost</div>
+                    <div class="nlp-value" style="color:#22d3ee;">${{ "%.2f" | format(erp_change_order.get('estimated_cost', 0)) }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- ═══ 11. FUSION DESIGN INFO ═══ -->
+        {% if fusion_design and fusion_design is mapping %}
+        <div class="section">
+            <div class="section-title"><div class="section-icon cyan">📐</div> 11. Fusion 360 Design Metadata</div>
+            <div class="nlp-grid">
+                <div class="nlp-item" style="border-left-color:#22d3ee;">
+                    <div class="nlp-label">Design Name</div>
+                    <div class="nlp-value" style="color:#22d3ee; font-size:13px;">{{ fusion_design.get('design_name', '—') if fusion_design.get is defined else '—' }}</div>
+                </div>
+                <div class="nlp-item" style="border-left-color:#22d3ee;">
+                    <div class="nlp-label">Design Type</div>
+                    <div class="nlp-value" style="color:#22d3ee; font-size:13px;">{{ fusion_design.get('design_type', '—') if fusion_design.get is defined else '—' }}</div>
+                </div>
+                <div class="nlp-item" style="border-left-color:#22d3ee;">
+                    <div class="nlp-label">Components</div>
+                    <div class="nlp-value" style="color:#22d3ee; font-size:13px;">{{ fusion_design.get('component_count', 0) if fusion_design.get is defined else 0 }}</div>
+                </div>
+                <div class="nlp-item" style="border-left-color:#22d3ee;">
+                    <div class="nlp-label">Units</div>
+                    <div class="nlp-value" style="color:#22d3ee; font-size:13px;">{{ fusion_design.get('units', 'mm') if fusion_design.get is defined else 'mm' }}</div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- ═══ 12. RECOMMENDATIONS ═══ -->
+        {% if recommendations %}
+        <div class="section">
+            <div class="section-title"><div class="section-icon green">💡</div> 12. Action Items & Recommendations</div>
+            <div class="section-desc">Automated recommendations based on the change type, affected components, and engineering best practices.</div>
+            {% for rec in recommendations %}
+            <div class="rec-item {{ 'critical' if 'CRITICAL' in rec or 'FAIL' in rec else ('warning' if 'RISK' in rec or 'WARNING' in rec or 'Verify' in rec else '') }}">
+                <span class="rec-number">{{ loop.index }}</span>{{ rec }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- ═══ 13. SIGN-OFF CHECKLIST ═══ -->
+        <div class="section">
+            <div class="section-title"><div class="section-icon blue">✅</div> 13. Change Approval Checklist</div>
+            <div style="padding: 16px 20px; background: #0d0f16; border-radius: 12px;">
+                <div class="checklist-item"><span class="checklist-icon">☐</span> Design Engineer review of geometrical changes</div>
+                <div class="checklist-item"><span class="checklist-icon">☐</span> FEA / stress analysis validation (if structural)</div>
+                <div class="checklist-item"><span class="checklist-icon">☐</span> Manufacturing feasibility review</div>
+                <div class="checklist-item"><span class="checklist-icon">☐</span> Quality & inspection plan updates</div>
+                <div class="checklist-item"><span class="checklist-icon">☐</span> BOM and cost impact verification</div>
+                <div class="checklist-item"><span class="checklist-icon">☐</span> Supplier notification (if tooling change)</div>
+                <div class="checklist-item"><span class="checklist-icon">☐</span> ECN approval — {{ classification }} revision</div>
+            </div>
+        </div>
+
+        <!-- ═══ FOOTER ═══ -->
+        <div class="report-footer">
+            <strong>Engineering Change Management System</strong> &nbsp;•&nbsp; Fusion 360 API Integration &nbsp;•&nbsp; PDM &nbsp;•&nbsp; ERP<br>
+            Report generated automatically on {{ timestamp }}. Classification and effort estimates are model-driven approximations.<br>
+            <span style="color:#3b4660;">AI-Driven Prompt Interface — Intelligent Change Management Assistant</span>
+        </div>
+    </div>
+</body>
+</html>

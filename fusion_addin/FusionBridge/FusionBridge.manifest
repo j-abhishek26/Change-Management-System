@@ -1,0 +1,12 @@
+{
+    "autodeskProduct": "Fusion",
+    "type": "addin",
+    "id": "ecm-fusion-bridge-001",
+    "author": "Engineering Change Management System",
+    "description": {
+        "": "Bridge add-in that enables the ECM web system to communicate with Fusion 360 via a local HTTP server on port 5001."
+    },
+    "version": "1.0.0",
+    "runOnStartup": false,
+    "supportedOS": "windows|mac"
+}

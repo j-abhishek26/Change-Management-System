@@ -1,0 +1,12 @@
+{
+    "autodeskProduct": "Fusion",
+    "type": "script",
+    "id": "ecm-demo-gearbox-builder-001",
+    "author": "Engineering Change Management System",
+    "description": {
+        "": "Automatically builds a parametric gearbox assembly with User Parameters for the ECM system demo."
+    },
+    "version": "1.0.0",
+    "runOnStartup": false,
+    "supportedOS": "windows|mac"
+}

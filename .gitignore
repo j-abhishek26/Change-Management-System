@@ -1,0 +1,32 @@
+# Python virtual environment
+venv/
+
+# Python bytecode cache
+__pycache__/
+*.pyc
+*.pyo
+
+# SQLite database (regenerable via init_db.py)
+data/ecm.db
+
+# Generated outputs (STEP/STL files from change requests)
+outputs/*
+!outputs/.gitkeep
+
+# Generated reports
+reports/*
+!reports/.gitkeep
+
+# Uploaded files
+uploads/*
+!uploads/.gitkeep
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+Thumbs.db
+.DS_Store

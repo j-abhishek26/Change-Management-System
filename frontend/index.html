@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Prompt-driven Intelligent Engineering Change Management System with Fusion 360, PDM, and ERP integration">
+    <title>Engineering Change Management System — Fusion 360 + PDM + ERP</title>
+    <link rel="stylesheet" href="/style.css">
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+</head>
+<body>
+
+<!-- ═══ Header ═══════════════════════════════════════════ -->
+<header class="header">
+    <div class="header-inner">
+        <div class="logo">
+            <div class="logo-icon">⚙️</div>
+            <div class="logo-text">
+                <h1>Engineering Change Manager</h1>
+                <span>Fusion 360 • PDM • ERP • Intelligent Reasoning</span>
+            </div>
+        </div>
+        <div class="header-status">
+            <button class="btn btn-sm fusion-connect-btn" id="fusionConnectBtn" onclick="connectFusion()">
+                🔌 Connect Fusion 360
+            </button>
+            <span class="cad-badge" id="cadBadge">Disconnected</span>
+            <div class="status-dot" id="statusDot" style="background:var(--accent-red);box-shadow:0 0 8px rgba(239,68,68,0.5);"></div>
+            <span class="status-text" id="statusText">Not Connected</span>
+        </div>
+    </div>
+</header>
+
+<!-- ═══ Navigation Tabs ══════════════════════════════════ -->
+<nav class="nav-tabs" id="navTabs">
+    <button class="nav-tab active" data-tab="analyzer" onclick="switchTab('analyzer')">
+        🔬 Change Analyzer
+    </button>
+    <button class="nav-tab" data-tab="pdm" onclick="switchTab('pdm')">
+        📦 PDM
+    </button>
+    <button class="nav-tab" data-tab="erp" onclick="switchTab('erp')">
+        🏭 ERP
+    </button>
+</nav>
+
+<!-- ═══ Tab: Change Analyzer ═════════════════════════════ -->
+<div class="tab-content active" id="tab-analyzer">
+<div class="main-layout">
+    
+    <!-- ─── Sidebar ──────────────────────────────────── -->
+    <aside class="sidebar">
+        <!-- Fusion Connection Card -->
+        <div class="card" id="fusionCard">
+            <div class="card-header">
+                <div class="card-icon blue">📐</div>
+                <span class="card-title">Fusion 360</span>
+            </div>
+            <div id="fusionInfo">
+                <div class="fusion-status-panel">
+                    <p style="font-size:12px; color:var(--text-muted);">
+                        1. Open Fusion 360 with a design<br>
+                        2. Run the <strong>FusionBridge</strong> add-in<br>
+                        3. Click "Connect" above
+                    </p>
+                </div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-secondary" onclick="loadDemo()">
+                    ⚡ Load Demo Parts
+                </button>
+            </div>
+        </div>
+
+        <!-- Parts List -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon orange">📋</div>
+                <span class="card-title">Parts Registry</span>
+            </div>
+            <div class="parts-list" id="partsList">
+                <div class="empty-state" style="padding: 20px 10px;">
+                    <p>No parts loaded.<br>Connect to Fusion 360 or load demo.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Change Request -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon purple">💬</div>
+                <span class="card-title">Change Request</span>
+            </div>
+            <div class="change-input-wrapper">
+                <textarea class="change-input" id="changeInput" 
+                    placeholder='Enter a change request, e.g.:&#10;"Increase pin diameter of Pin by 0.5 mm"&#10;"Reduce fork length of Fork 1 by 1 mm"&#10;"Change shaft diameter to 3 mm"'
+                    rows="4"></textarea>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" id="analyzeBtn" onclick="analyzeChange()">
+                    🚀 Analyze & Apply
+                </button>
+            </div>
+            <div style="margin-top: 12px;">
+                <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">QUICK EXAMPLES:</div>
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <button class="btn btn-sm btn-secondary" onclick="setExample('Increase pin diameter of Pin by 0.5 mm')">Increase pin diameter</button>
+                    <button class="btn btn-sm btn-secondary" onclick="setExample('Reduce fork length of Fork 1 by 1 mm')">Reduce fork length</button>
+                    <button class="btn btn-sm btn-secondary" onclick="setExample('Change shaft diameter to 3 mm')">Change shaft diameter</button>
+                    <button class="btn btn-sm btn-secondary" onclick="setExample('Increase pin length of Pin by 1 mm')">Increase pin length</button>
+                    <button class="btn btn-sm btn-secondary" onclick="setExample('Reduce fork width of Fork 2 by 0.5 mm')">Reduce fork width</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fusion Parameters Panel -->
+        <div class="card" id="fusionParamsCard" style="display:none;">
+            <div class="card-header">
+                <div class="card-icon blue">⚙️</div>
+                <span class="card-title">Live Parameters</span>
+                <button class="btn btn-sm btn-secondary" onclick="refreshParams()" style="margin-left:auto;">↻</button>
+            </div>
+            <div class="params-list" id="fusionParamsList"></div>
+        </div>
+    </aside>
+
+    <!-- ─── Main Content ─────────────────────────────── -->
+    <main class="main-content">
+        <!-- 3D Viewer -->
+        <div class="viewer-panel">
+            <div class="viewer-header">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 15px;">🔍</span>
+                    <span style="font-size: 13px; font-weight: 600;">3D Model Viewer</span>
+                    <span class="fusion-live-indicator" id="fusionLiveTag" style="display:none;">
+                        ● LIVE from Fusion 360
+                    </span>
+                    <span style="font-size: 10px; color: var(--text-muted); margin-left: 8px;">Units: mm</span>
+                </div>
+                <div class="viewer-tabs">
+                    <button class="viewer-tab active" onclick="setViewMode('split')">Split View</button>
+                    <button class="viewer-tab" onclick="setViewMode('before')">Before</button>
+                    <button class="viewer-tab" onclick="setViewMode('after')">After</button>
+                </div>
+            </div>
+            <div class="viewer-container" id="viewerContainer">
+                <div class="viewer-pane" id="viewerBefore">
+                    <span class="viewer-label before">Before</span>
+                    <div class="viewer-placeholder" id="beforePlaceholder">
+                        <div class="placeholder-icon">📦</div>
+                        <div>Load a model to view<br>the original geometry</div>
+                    </div>
+                    <canvas id="canvasBefore" style="display:none;"></canvas>
+                </div>
+                <div class="viewer-pane" id="viewerAfter">
+                    <span class="viewer-label after">After</span>
+                    <div class="viewer-placeholder" id="afterPlaceholder">
+                        <div class="placeholder-icon">✨</div>
+                        <div>Run an analysis to see<br>the modified geometry</div>
+                    </div>
+                    <canvas id="canvasAfter" style="display:none;"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Geometry Comparison Panel -->
+        <div class="geometry-comparison-card" id="geometryComparison" style="display:none;"></div>
+
+        <!-- Results Area -->
+        <div id="resultsArea" style="display:none;">
+            <!-- NLP Parse Result -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon purple">🧠</div>
+                    <span class="card-title">NLP Parse Result</span>
+                    <div style="margin-left: auto;">
+                        <span class="badge" id="confidenceBadge">—</span>
+                    </div>
+                </div>
+                <div class="parse-result" id="parseResult"></div>
+                <div class="confidence-bar">
+                    <div class="confidence-fill" id="confidenceFill" style="width:0%;"></div>
+                </div>
+            </div>
+
+            <!-- Parameter Change Detail -->
+            <div class="card" id="paramChangeCard" style="display:none;">
+                <div class="card-header">
+                    <div class="card-icon blue">⚙️</div>
+                    <span class="card-title">Fusion 360 Parameter Change</span>
+                </div>
+                <div class="param-change-detail" id="paramChangeDetail"></div>
+            </div>
+
+            <!-- Impact Stats -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon red">📊</div>
+                    <span class="card-title">Impact Analysis</span>
+                </div>
+                <div class="impact-stats" id="impactStats"></div>
+                <div id="affectedSection" style="margin-top: 16px; display: none;">
+                    <div style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; text-transform: uppercase;">
+                        Affected Components
+                    </div>
+                    <table class="affected-table" id="affectedTable">
+                        <thead><tr><th>Part</th><th>Relationship</th><th>Severity</th><th>Score</th><th>Impact</th></tr></thead>
+                        <tbody id="affectedBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ERP Integration Results -->
+            <div class="card" id="erpResultCard" style="display:none;">
+                <div class="card-header">
+                    <div class="card-icon orange">🏭</div>
+                    <span class="card-title">ERP — Automated Actions</span>
+                </div>
+                <div id="erpResultContent"></div>
+            </div>
+
+            <!-- Recommendations -->
+            <div class="card" id="recsCard" style="display:none;">
+                <div class="card-header">
+                    <div class="card-icon green">💡</div>
+                    <span class="card-title">Automated Recommendations</span>
+                </div>
+                <ul class="rec-list" id="recsList"></ul>
+            </div>
+
+            <!-- Downloads -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon blue">📥</div>
+                    <span class="card-title">Downloads</span>
+                </div>
+                <div class="download-group" id="downloadGroup">
+                    <button class="btn btn-secondary btn-sm" id="downloadPdf" onclick="downloadPdf()" disabled style="background:rgba(239,68,68,0.15); border-color:rgba(239,68,68,0.3); color:#f87171;">
+                        📥 Download PDF Report
+                    </button>
+                    <button class="btn btn-secondary btn-sm" id="downloadReport" onclick="downloadReport()" disabled>
+                        📄 View Full Report (HTML)
+                    </button>
+                    <button class="btn btn-secondary btn-sm" id="downloadStep" onclick="downloadStep()" disabled>
+                        📐 Modified STEP File
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyResults" class="card">
+            <div class="empty-state">
+                <div class="empty-icon">🚀</div>
+                <h3>Ready to Analyze</h3>
+                <p>Connect to Fusion 360, load the demo, then enter a change request.<br>
+                   <span style="font-size:12px; color:var(--text-muted);">
+                       Or use simulation mode without Fusion 360.
+                   </span>
+                </p>
+            </div>
+        </div>
+    </main>
+</div>
+</div>
+
+<!-- ═══ Tab: PDM ═════════════════════════════════════════ -->
+<div class="tab-content" id="tab-pdm">
+<div class="pdm-layout">
+    <!-- BOM Section -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-icon green">📋</div>
+            <span class="card-title">Bill of Materials</span>
+            <button class="btn btn-sm btn-secondary" onclick="loadBOM()" style="margin-left:auto;">↻ Refresh</button>
+        </div>
+        <div id="bomContent">
+            <div class="empty-state" style="padding: 30px;"><p>Click Refresh to load BOM data.</p></div>
+        </div>
+    </div>
+
+    <!-- Two-column: Revisions + Metadata -->
+    <div class="pdm-grid">
+        <!-- Revision History -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon purple">📜</div>
+                <span class="card-title">Revision History</span>
+            </div>
+            <div class="pdm-part-select">
+                <select id="revPartSelect" class="pdm-select" onchange="loadRevisions()">
+                    <option value="">Select a part...</option>
+                </select>
+            </div>
+            <div id="revisionContent">
+                <div class="empty-state" style="padding: 20px;"><p>Select a part above.</p></div>
+            </div>
+        </div>
+
+        <!-- CAD Metadata -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon blue">📐</div>
+                <span class="card-title">CAD Metadata</span>
+            </div>
+            <div id="metadataContent">
+                <div class="empty-state" style="padding: 20px;"><p>Select a part to view CAD metadata.</p></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Documents -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-icon orange">📄</div>
+            <span class="card-title">Document Registry</span>
+        </div>
+        <div id="docRegistryContent">
+            <div class="empty-state" style="padding: 20px;"><p>Select a part to view linked documents.</p></div>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- ═══ Tab: ERP ═════════════════════════════════════════ -->
+<div class="tab-content" id="tab-erp">
+<div class="erp-layout">
+    <!-- Summary Cards -->
+    <div class="erp-summary" id="erpSummary">
+        <div class="erp-stat-card">
+            <div class="erp-stat-value" id="erpOrderCount">0</div>
+            <div class="erp-stat-label">Work Orders</div>
+        </div>
+        <div class="erp-stat-card">
+            <div class="erp-stat-value" id="erpTotalCost">$0</div>
+            <div class="erp-stat-label">Total Cost</div>
+        </div>
+        <div class="erp-stat-card">
+            <div class="erp-stat-value" id="erpBomCost">$0</div>
+            <div class="erp-stat-label">BOM Cost</div>
+        </div>
+        <div class="erp-stat-card">
+            <div class="erp-stat-value" id="erpLowStock">0</div>
+            <div class="erp-stat-label">Low Stock Items</div>
+        </div>
+    </div>
+
+    <!-- Two-column: Orders + Workflow -->
+    <div class="erp-grid">
+        <!-- Manufacturing Orders -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon red">📋</div>
+                <span class="card-title">Manufacturing Orders</span>
+                <button class="btn btn-sm btn-secondary" onclick="loadERPOrders()" style="margin-left:auto;">↻</button>
+            </div>
+            <div id="erpOrdersContent">
+                <div class="empty-state" style="padding: 20px;"><p>No manufacturing orders yet.<br>Run an analysis to auto-generate orders.</p></div>
+            </div>
+        </div>
+
+        <!-- Change Order Workflow -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon purple">🔄</div>
+                <span class="card-title">Change Order Workflow</span>
+                <button class="btn btn-sm btn-secondary" onclick="loadERPWorkflow()" style="margin-left:auto;">↻</button>
+            </div>
+            <div id="erpWorkflowContent">
+                <div class="empty-state" style="padding: 20px;"><p>No change orders yet.</p></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Two-column: Inventory + Suppliers -->
+    <div class="erp-grid">
+        <!-- Inventory -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon green">📦</div>
+                <span class="card-title">Inventory Status</span>
+                <button class="btn btn-sm btn-secondary" onclick="loadERPInventory()" style="margin-left:auto;">↻</button>
+            </div>
+            <div id="erpInventoryContent">
+                <div class="empty-state" style="padding: 20px;"><p>Click Refresh to load inventory.</p></div>
+            </div>
+        </div>
+
+        <!-- Suppliers -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon blue">🤝</div>
+                <span class="card-title">Suppliers</span>
+                <button class="btn btn-sm btn-secondary" onclick="loadERPSuppliers()" style="margin-left:auto;">↻</button>
+            </div>
+            <div id="erpSuppliersContent">
+                <div class="empty-state" style="padding: 20px;"><p>Click Refresh to load suppliers.</p></div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay" style="display:none;">
+    <div class="spinner"></div>
+    <div class="loading-text" id="loadingText">Processing...</div>
+</div>
+
+<!-- Scripts -->
+<script type="module" src="/three_viewer.js"></script>
+<script src="/app.js"></script>
+
+</body>
+</html>
